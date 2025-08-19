@@ -75,7 +75,7 @@ services:
           name: superset-redis
           property: port
     dockerCommand: |
-      bash -lc 'celery --app=superset.tasks.celery_app:app worker -Ofair --loglevel=INFO'
+      bash -lc "celery --app=superset.tasks.celery_app:app worker -Ofair --loglevel=INFO"
 
   - type: worker
     name: superset-celery-beat
@@ -103,7 +103,7 @@ services:
           name: superset-redis
           property: port
     dockerCommand: |
-      bash -lc 'celery --app=superset.tasks.celery_app:app beat --loglevel=INFO'
+      bash -lc "celery --app=superset.tasks.celery_app:app beat --loglevel=INFO"
 
 databases:
   - name: superset-meta
