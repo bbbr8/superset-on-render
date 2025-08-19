@@ -1,0 +1,110 @@
+previews:
+  generation: off
+
+services:
+  - type: keyvalue
+    name: superset-redis
+    plan: starter
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: open
+
+  - type: web
+    name: superset-web
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: standard
+    healthCheckPath: /health
+    envVars:
+      - key: SUPERSET_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: superset-meta
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: superset-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: superset-redis
+          property: port
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_FIRST_NAME
+        value: Superset
+      - key: ADMIN_LAST_NAME
+        value: Admin
+      - key: ADMIN_EMAIL
+        value: admin@example.com
+      - key: LOAD_EXAMPLES
+        value: "false"
+      - key: ENABLE_PROXY_FIX
+        value: "true"
+      - key: GUNICORN_WORKERS
+        value: "4"
+
+  - type: worker
+    name: superset-celery-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    envVars:
+      - key: SUPERSET_SECRET_KEY
+        fromService:
+          type: web
+          name: superset-web
+          envVarKey: SUPERSET_SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: superset-meta
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: superset-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: superset-redis
+          property: port
+    dockerCommand: |
+      bash -lc 'celery --app=superset.tasks.celery_app:app worker -Ofair --loglevel=INFO'
+
+  - type: worker
+    name: superset-celery-beat
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    envVars:
+      - key: SUPERSET_SECRET_KEY
+        fromService:
+          type: web
+          name: superset-web
+          envVarKey: SUPERSET_SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: superset-meta
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: superset-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: superset-redis
+          property: port
+    dockerCommand: |
+      bash -lc 'celery --app=superset.tasks.celery_app:app beat --loglevel=INFO'
+
+databases:
+  - name: superset-meta
+    plan: basic-1gb
