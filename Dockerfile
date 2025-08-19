@@ -7,7 +7,7 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends         build-essential curl &&         rm -rf /var/lib/apt/lists/*
 
 # Python deps: Postgres driver, Redis, Celery, Google Sheets via Shillelagh (optional)
-RUN pip install --no-cache-dir         psycopg2-binary         redis         celery==5.3.6         shillelagh[gsheets]==1.4.6
+RUN pip install --no-cache-dir         psycopg2-binary         redis         celery==5.3.6      
 
 # Add our config on the PYTHONPATH
 ENV PYTHONPATH="/app/pythonpath:$PYTHONPATH"
